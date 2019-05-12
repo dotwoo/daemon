@@ -3,59 +3,56 @@ package main
 import (
 	"os"
 	"sync"
-	"time"
 )
 
-type LogFile struct {
-	mu   sync.Mutex
-	name string
-	file *os.File
+// File Handler
+type FileHandler struct {
+	fp    *os.File
+	guard sync.Mutex
+	path  string
+	mode  os.FileMode
 }
 
-// NewLogFile creates a new LogFile. The file is optional - it will be created if needed.
-func NewLogFile(name string, file *os.File) (*LogFile, error) {
-	rw := &LogFile{
-		file: file,
-		name: name,
+func NewFileHandler(path string, mode os.FileMode) *FileHandler {
+	handler := &FileHandler{
+		path: path,
+		mode: mode,
 	}
-	if file == nil {
-		if err := rw.Rotate(); err != nil {
-			return nil, err
-		}
-	}
-	return rw, nil
+	handler.Reopen()
+
+	return handler
 }
 
-func (l *LogFile) Write(b []byte) (n int, err error) {
-	l.mu.Lock()
-	n, err = l.file.Write(b)
-	l.mu.Unlock()
-	return
+func (h *FileHandler) Close() error {
+	h.guard.Lock()
+	defer h.guard.Unlock()
+
+	return h.fp.Close()
 }
 
-// Rotate renames old log file, creates new one, switches log and closes the old file.
-func (l *LogFile) Rotate() error {
-	// rename dest file if it already exists.
-	if _, err := os.Stat(l.name); err == nil {
-		name := l.name + "." + time.Now().Format(time.RFC3339)
-		if err = os.Rename(l.name, name); err != nil {
-			return err
-		}
+func (h *FileHandler) Write(p []byte) (n int, err error) {
+	h.guard.Lock()
+	defer h.guard.Unlock()
+
+	return h.fp.Write(p)
+}
+
+func (h *FileHandler) Reopen() {
+	h.guard.Lock()
+	defer h.guard.Unlock()
+
+	if h.fp != nil {
+		h.fp.Close()
 	}
-	// create new file.
-	file, err := os.Create(l.name)
+
+	fp, err := os.OpenFile(
+		h.path,
+		os.O_RDWR|os.O_CREATE|os.O_APPEND,
+		h.mode)
+
 	if err != nil {
-		return err
+		panic(err)
 	}
-	// switch dest file safely.
-	l.mu.Lock()
-	file, l.file = l.file, file
-	l.mu.Unlock()
-	// close old file if open.
-	if file != nil {
-		if err := file.Close(); err != nil {
-			return err
-		}
-	}
-	return nil
+
+	h.fp = fp
 }
