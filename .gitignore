@@ -24,4 +24,4 @@ daemon
 *.log.*
 *.log
 *.pid
-example
+example/example
