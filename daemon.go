@@ -1,4 +1,4 @@
-package main
+package daemon
 
 import (
 	"flag"
@@ -16,10 +16,15 @@ var (
 	reload — reloading the configuration file
 	rotate - rotate the log`)
 	defaultServer DServer
+	defaultArgs   []string
 )
 
 const defaultLogFN = "logs/daemon.log"
 const defaultPidFN = "run/daemon.pid"
+
+func init() {
+	defaultArgs = []string{"[go-daemon sample]"}
+}
 
 func Run(srv DServer) {
 	if srv == nil {
@@ -34,6 +39,10 @@ func Run(srv DServer) {
 	if logFileName == "" {
 		logFileName = defaultLogFN
 	}
+	args := srv.GetArgs()
+	if len(args) == 0 {
+		args = defaultArgs
+	}
 	daemon.AddCommand(daemon.StringFlag(signal, "quit"), syscall.SIGQUIT, termHandler)
 	daemon.AddCommand(daemon.StringFlag(signal, "stop"), syscall.SIGTERM, termHandler)
 	daemon.AddCommand(daemon.StringFlag(signal, "reload"), syscall.SIGHUP, reloadHandler)
@@ -46,7 +55,7 @@ func Run(srv DServer) {
 		LogFilePerm: 0640,
 		WorkDir:     "./",
 		Umask:       027,
-		Args:        []string{"[go-daemon sample]"},
+		Args:        args,
 	}
 
 	if len(daemon.ActiveFlags()) > 0 {

@@ -1,4 +1,4 @@
-package main
+package daemon
 
 // DServer daemon 服务器接口
 type DServer interface {
@@ -16,6 +16,6 @@ type DServer interface {
 	GetPidFile() string
 	// GetLogFile 返回 log 文件配置
 	GetLogFile() string
-	// TODO 如果父进程的日志设置无法传入子进程,需要
-	// SetUplog()
+	// GetArgs 返回 daemon Args 配置
+	GetArgs() []string
 }
