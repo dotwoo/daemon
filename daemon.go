@@ -117,6 +117,7 @@ func Status(srv DServer) {
 		return
 	}
 	fmt.Println(args, "[", d.Pid, "]", "is running")
+	return
 }
 
 func termHandler(sig os.Signal) error {
