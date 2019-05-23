@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"syscall"
 
@@ -86,6 +87,36 @@ func Run(srv DServer) {
 	}
 
 	log.Infoln("daemon terminated")
+}
+func Status(srv DServer) {
+	pidFileName := srv.GetPidFile()
+	if pidFileName == "" {
+		pidFileName = defaultPidFN
+	}
+	logFileName := srv.GetLogFile()
+	if logFileName == "" {
+		logFileName = defaultLogFN
+	}
+	args := srv.GetArgs()
+	if len(args) == 0 {
+		args = defaultArgs
+	}
+	cntxt := &daemon.Context{
+		PidFileName: pidFileName,
+		PidFilePerm: 0644,
+		LogFileName: logFileName,
+		LogFilePerm: 0640,
+		WorkDir:     "./",
+		Umask:       027,
+		Args:        args,
+	}
+
+	d, err := cntxt.Search()
+	if err != nil {
+		fmt.Println(args, "is stop")
+		return
+	}
+	fmt.Println(args, "[", d.Pid, "]", "is running")
 }
 
 func termHandler(sig os.Signal) error {
