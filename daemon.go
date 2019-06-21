@@ -114,9 +114,19 @@ func Status(srv DServer) {
 	d, err := cntxt.Search()
 	if err != nil {
 		fmt.Println(args, "is stop")
+		os.Exit(1)
 		return
 	}
+
+	err = d.Signal(syscall.Signal(0))
+	if err != nil {
+		fmt.Println(args, "is stop")
+		os.Exit(1)
+		return
+	}
+
 	fmt.Println(args, "[", d.Pid, "]", "is running")
+	os.Exit(0)
 	return
 }
 
