@@ -60,19 +60,19 @@ func Run(srv DServer) {
 	}
 
 	if len(daemon.ActiveFlags()) > 0 {
-		d, err := d.Search()
+		p, err := d.Search()
 		if err != nil {
 			log.Fatalf("Unable send signal to the daemon: %s", err.Error())
 		}
-		_ = daemon.SendCommands(d)
+		_ = daemon.SendCommands(p)
 		return
 	}
 	if !(*foreground) {
-		d, err := d.Reborn()
+		p, err := d.Reborn()
 		if err != nil {
 			log.Fatalln(err)
 		}
-		if d != nil {
+		if p != nil {
 			return
 		}
 		defer d.Release()
