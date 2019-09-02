@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/dotwoo/daemon"
-	log "github.com/sirupsen/logrus"
 )
 
 // SHServer 一个简单的 http 服务 进程配置
@@ -21,7 +21,7 @@ type SHServer struct {
 
 // Serve 持续性提供服务
 func (sh *SHServer) Serve() {
-	log.Debugln("shserver start serve ...")
+	log.Println("shserver start serve ...")
 	err := sh.Server.ListenAndServe()
 	if err != nil {
 		log.Println("Server serve :", err)
@@ -31,7 +31,7 @@ func (sh *SHServer) Serve() {
 
 // Quit 优雅关闭服务
 func (sh *SHServer) Quit() {
-	log.Debugln("shserver graceful shutdown ...")
+	log.Println("shserver graceful shutdown ...")
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 	err := sh.Server.Shutdown(ctx)
 	if err != nil {
@@ -43,7 +43,7 @@ func (sh *SHServer) Quit() {
 
 // Stop 快速关闭服务
 func (sh *SHServer) Stop() {
-	log.Debugln("shserver fast stop ...")
+	log.Println("shserver fast stop ...")
 	err := sh.Server.Close()
 	if err != nil {
 		log.Fatalln("Server stop :", err)
@@ -53,27 +53,25 @@ func (sh *SHServer) Stop() {
 
 // Reload 重载配置
 func (sh *SHServer) Reload() {
-	log.Debugln("shserver reload ...")
+	log.Println("shserver reload ...")
 	sh.StartTime = time.Now().String()
 	return
 }
 
 // Rotate 执行日志 rotate
 func (sh *SHServer) Rotate() {
-	log.Debugln("shserver rotate ...")
+	log.Println("shserver rotate ...")
 	sh.lf.Reopen()
 	return
 }
 
 // GetPidFile返回 pid 文件配置
 func (sh *SHServer) GetPidFile() string {
-	// log.Debugln("shserver getPidFile ...")
 	return sh.PidFN
 }
 
 // GetLogFile 返回 log 文件配置
 func (sh *SHServer) GetLogFile() string {
-	// log.Debugln("shserver getLogFile ...")
 	return sh.LogFN
 }
 
@@ -85,8 +83,8 @@ func (sh *SHServer) GetArgs() []string {
 // NewSample ...
 func NewSample() *SHServer {
 	sh := new(SHServer)
-	sh.PidFN = "./run/shserver.pid"
-	sh.LogFN = "./log/shserver.log"
+	sh.PidFN = "./shserver.pid"
+	sh.LogFN = "./shserver.log"
 	sh.StartTime = time.Now().String()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {

@@ -3,11 +3,11 @@ package daemon
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"syscall"
 
 	daemon "github.com/sevlyar/go-daemon"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -16,6 +16,7 @@ var (
 	stop — fast shutdown
 	reload — reloading the configuration file
 	rotate - rotate the log`)
+	foreground    = flag.Bool("f", false, "run at the foreground")
 	defaultServer DServer
 	defaultArgs   []string
 )
@@ -53,7 +54,7 @@ func Run(srv DServer) {
 		PidFileName: pidFileName,
 		PidFilePerm: 0644,
 		LogFileName: logFileName,
-		LogFilePerm: 0640,
+		LogFilePerm: 0644,
 		WorkDir:     "./",
 		Umask:       027,
 		Args:        args,
@@ -64,29 +65,31 @@ func Run(srv DServer) {
 		if err != nil {
 			log.Fatalf("Unable send signal to the daemon: %s", err.Error())
 		}
-		daemon.SendCommands(d)
+		_ = daemon.SendCommands(d)
 		return
+	}
+	if !(*foreground) {
+		d, err := cntxt.Reborn()
+		if err != nil {
+			log.Fatalln(err)
+		}
+		if d != nil {
+			return
+		}
+		defer cntxt.Release()
 	}
 
-	d, err := cntxt.Reborn()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	if d != nil {
-		return
-	}
-	defer cntxt.Release()
 	defaultServer = srv
 
-	log.Infoln("daemon started")
+	log.Print("daemon started")
 	go srv.Serve()
 
-	err = daemon.ServeSignals()
+	err := daemon.ServeSignals()
 	if err != nil {
 		log.Printf("Error: %s", err.Error())
 	}
 
-	log.Infoln("daemon terminated")
+	log.Print("daemon terminated")
 }
 func Status(srv DServer) {
 	pidFileName := srv.GetPidFile()
@@ -132,14 +135,12 @@ func Status(srv DServer) {
 
 func termHandler(sig os.Signal) error {
 	if defaultServer == nil {
-		log.Errorln("nofind server ...")
+		log.Fatalln("nofind server ...")
 		return daemon.ErrStop
 	}
 	if sig == syscall.SIGQUIT {
-		log.Debugln("server graceful shutdown ...")
 		defaultServer.Quit()
 	} else {
-		log.Debugln("server fast shutdown ...")
 		defaultServer.Stop()
 	}
 	return daemon.ErrStop
@@ -147,21 +148,20 @@ func termHandler(sig os.Signal) error {
 
 func reloadHandler(sig os.Signal) error {
 	if defaultServer == nil {
-		log.Errorln("nofind server ...")
+		log.Fatalln("nofind server ...")
 		return daemon.ErrStop
 	}
 
-	log.Debugln("configuration reloaded")
 	defaultServer.Reload()
 	return nil
 }
 
 func rotateHandler(sig os.Signal) error {
 	if defaultServer == nil {
-		log.Errorln("nofind server ...")
+		log.Fatalln("nofind server ...")
 		return daemon.ErrStop
 	}
-	log.Debugln("rotate ...")
+
 	defaultServer.Rotate()
 	return nil
 }
