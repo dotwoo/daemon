@@ -2,7 +2,6 @@ package daemon
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"syscall"
@@ -50,7 +49,7 @@ func Run(srv DServer) {
 	daemon.AddCommand(daemon.StringFlag(signal, "reload"), syscall.SIGHUP, reloadHandler)
 	daemon.AddCommand(daemon.StringFlag(signal, "rotate"), syscall.SIGUSR1, rotateHandler)
 
-	cntxt := &daemon.Context{
+	d := &daemon.Context{
 		PidFileName: pidFileName,
 		PidFilePerm: 0644,
 		LogFileName: logFileName,
@@ -61,7 +60,7 @@ func Run(srv DServer) {
 	}
 
 	if len(daemon.ActiveFlags()) > 0 {
-		d, err := cntxt.Search()
+		d, err := d.Search()
 		if err != nil {
 			log.Fatalf("Unable send signal to the daemon: %s", err.Error())
 		}
@@ -69,14 +68,14 @@ func Run(srv DServer) {
 		return
 	}
 	if !(*foreground) {
-		d, err := cntxt.Reborn()
+		d, err := d.Reborn()
 		if err != nil {
 			log.Fatalln(err)
 		}
 		if d != nil {
 			return
 		}
-		defer cntxt.Release()
+		defer d.Release()
 	}
 
 	defaultServer = srv
@@ -91,51 +90,10 @@ func Run(srv DServer) {
 
 	log.Print("daemon terminated")
 }
-func Status(srv DServer) {
-	pidFileName := srv.GetPidFile()
-	if pidFileName == "" {
-		pidFileName = defaultPidFN
-	}
-	logFileName := srv.GetLogFile()
-	if logFileName == "" {
-		logFileName = defaultLogFN
-	}
-	args := srv.GetArgs()
-	if len(args) == 0 {
-		args = defaultArgs
-	}
-	cntxt := &daemon.Context{
-		PidFileName: pidFileName,
-		PidFilePerm: 0644,
-		LogFileName: logFileName,
-		LogFilePerm: 0640,
-		WorkDir:     "./",
-		Umask:       027,
-		Args:        args,
-	}
-
-	d, err := cntxt.Search()
-	if err != nil {
-		fmt.Println(args, "is stop")
-		os.Exit(1)
-		return
-	}
-
-	err = d.Signal(syscall.Signal(0))
-	if err != nil {
-		fmt.Println(args, "is stop")
-		os.Exit(1)
-		return
-	}
-
-	fmt.Println(args, "[", d.Pid, "]", "is running")
-	os.Exit(0)
-	return
-}
 
 func termHandler(sig os.Signal) error {
 	if defaultServer == nil {
-		log.Fatalln("nofind server ...")
+		log.Fatalln("cant find server ...")
 		return daemon.ErrStop
 	}
 	if sig == syscall.SIGQUIT {
@@ -148,7 +106,7 @@ func termHandler(sig os.Signal) error {
 
 func reloadHandler(sig os.Signal) error {
 	if defaultServer == nil {
-		log.Fatalln("nofind server ...")
+		log.Fatalln("cant find server ...")
 		return daemon.ErrStop
 	}
 
@@ -158,7 +116,7 @@ func reloadHandler(sig os.Signal) error {
 
 func rotateHandler(sig os.Signal) error {
 	if defaultServer == nil {
-		log.Fatalln("nofind server ...")
+		log.Fatalln("cant find server ...")
 		return daemon.ErrStop
 	}
 
