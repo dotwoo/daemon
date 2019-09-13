@@ -29,7 +29,7 @@ func init() {
 
 func Run(srv DServer) {
 	if srv == nil {
-		log.Fatalln("the server is nil")
+		log.Panicln("the server is nil")
 		return
 	}
 	flag.Parse()
@@ -63,7 +63,7 @@ func Run(srv DServer) {
 	if len(daemon.ActiveFlags()) > 0 {
 		p, err := d.Search()
 		if err != nil {
-			log.Fatalf("Unable send signal to the daemon: %s", err.Error())
+			log.Panicln("Unable send signal to the daemon: %s", err.Error())
 		}
 		_ = daemon.SendCommands(p)
 		return
@@ -71,7 +71,7 @@ func Run(srv DServer) {
 	if !(*foreground) {
 		p, err := d.Reborn()
 		if err != nil {
-			log.Fatalln(err)
+			log.Panicln(err.Error())
 		}
 		if p != nil {
 			return
@@ -85,13 +85,14 @@ func Run(srv DServer) {
 
 	err := daemon.ServeSignals()
 	if err != nil {
-		log.Printf("Error: %s", err.Error())
+		log.Panicln("ServeSignals Error: %s", err.Error())
 	}
 
 }
 
 func termHandler(sig os.Signal) error {
 	if defaultServer == nil {
+		log.Panicln("the server is nil")
 		return daemon.ErrStop
 	}
 	if sig == syscall.SIGQUIT {
@@ -104,6 +105,7 @@ func termHandler(sig os.Signal) error {
 
 func reloadHandler(sig os.Signal) error {
 	if defaultServer == nil {
+		log.Panicln("the server is nil")
 		return daemon.ErrStop
 	}
 
@@ -113,6 +115,7 @@ func reloadHandler(sig os.Signal) error {
 
 func rotateHandler(sig os.Signal) error {
 	if defaultServer == nil {
+		log.Panicln("the server is nil")
 		return daemon.ErrStop
 	}
 
