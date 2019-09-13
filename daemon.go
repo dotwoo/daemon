@@ -30,6 +30,7 @@ func init() {
 func Run(srv DServer) {
 	if srv == nil {
 		log.Fatalln("the server is nil")
+		return
 	}
 	flag.Parse()
 	pidFileName := srv.GetPidFile()
@@ -80,7 +81,6 @@ func Run(srv DServer) {
 
 	defaultServer = srv
 
-	log.Print("daemon started")
 	go srv.Serve()
 
 	err := daemon.ServeSignals()
@@ -88,12 +88,10 @@ func Run(srv DServer) {
 		log.Printf("Error: %s", err.Error())
 	}
 
-	log.Print("daemon terminated")
 }
 
 func termHandler(sig os.Signal) error {
 	if defaultServer == nil {
-		log.Fatalln("cant find server ...")
 		return daemon.ErrStop
 	}
 	if sig == syscall.SIGQUIT {
@@ -106,7 +104,6 @@ func termHandler(sig os.Signal) error {
 
 func reloadHandler(sig os.Signal) error {
 	if defaultServer == nil {
-		log.Fatalln("cant find server ...")
 		return daemon.ErrStop
 	}
 
@@ -116,7 +113,6 @@ func reloadHandler(sig os.Signal) error {
 
 func rotateHandler(sig os.Signal) error {
 	if defaultServer == nil {
-		log.Fatalln("cant find server ...")
 		return daemon.ErrStop
 	}
 
