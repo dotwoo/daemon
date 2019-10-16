@@ -26,19 +26,17 @@ func (sh *SHServer) Serve() {
 	if err != nil {
 		log.Println("Server serve :", err)
 	}
-	return
 }
 
 // Quit 优雅关闭服务
 func (sh *SHServer) Quit() {
 	log.Println("shserver graceful shutdown ...")
-	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	err := sh.Server.Shutdown(ctx)
 	if err != nil {
 		log.Fatalln("Server quit :", err)
 	}
-	ctx.Done()
-	return
 }
 
 // Stop 快速关闭服务
@@ -48,21 +46,18 @@ func (sh *SHServer) Stop() {
 	if err != nil {
 		log.Fatalln("Server stop :", err)
 	}
-	return
 }
 
 // Reload 重载配置
 func (sh *SHServer) Reload() {
 	log.Println("shserver reload ...")
 	sh.StartTime = time.Now().String()
-	return
 }
 
 // Rotate 执行日志 rotate
 func (sh *SHServer) Rotate() {
 	log.Println("shserver rotate ...")
 	sh.lf.Reopen()
-	return
 }
 
 // GetPidFile返回 pid 文件配置

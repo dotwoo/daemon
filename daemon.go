@@ -63,7 +63,7 @@ func Run(srv DServer) {
 	if len(daemon.ActiveFlags()) > 0 {
 		p, err := d.Search()
 		if err != nil {
-			log.Panicln("Unable send signal to the daemon: %s", err.Error())
+			log.Panicln("Unable send signal to the daemon: ", err.Error())
 		}
 		_ = daemon.SendCommands(p)
 		return
@@ -85,7 +85,7 @@ func Run(srv DServer) {
 
 	err := daemon.ServeSignals()
 	if err != nil {
-		log.Panicln("ServeSignals Error: %s", err.Error())
+		log.Panicln("ServeSignals Error: ", err.Error())
 	}
 
 }
