@@ -20,8 +20,8 @@ var (
 	defaultArgs   []string
 )
 
-const defaultLogFN = "logs/daemon.log"
-const defaultPidFN = "run/daemon.pid"
+const defaultLogFN = "/dev/stdout"
+const defaultPidFN = "/tmp/daemon.pid"
 
 func init() {
 	defaultArgs = []string{"[go-daemon sample]"}
