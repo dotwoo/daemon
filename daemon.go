@@ -81,13 +81,15 @@ func Run(srv DServer) {
 
 	defaultServer = srv
 
-	go srv.Serve()
+	go func() {
+		daemon.CreatePidFile(pidFileName, 0644)
+		err := daemon.ServeSignals()
+		if err != nil {
+			log.Panicln("ServeSignals Error: ", err.Error())
+		}
+	}()
 
-	err := daemon.ServeSignals()
-	if err != nil {
-		log.Panicln("ServeSignals Error: ", err.Error())
-	}
-
+	srv.Serve()
 }
 
 func termHandler(sig os.Signal) error {
