@@ -20,7 +20,7 @@ var (
 	defaultArgs   []string
 )
 
-const defaultLogFN = "/dev/stdout"
+const defaultLogFN = ""
 const defaultPidFN = "/tmp/daemon.pid"
 
 func init() {
